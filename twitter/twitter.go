@@ -256,10 +256,29 @@ func (self *Twitter) Retweet(id string) {
 }
 
 
+func (self *Twitter) Verify() (*User, error) {
+	url_ := "https://api.twitter.com/1.1/account/verify_credentials.json"
+	param := make(url.Values)
+	oauthClient.SignParam(self.token, "GET", url_, param)
 
-func (self *Twitter) Statuses() {
+	res, err := http.Get(url_)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("returns %d", res.StatusCode)
+	}
+
+	var user User
+	json.NewDecoder(res.Body).Decode(&user)
+
+	return &user
+}
+
+func (self *Twitter) Statuses(opt map[string]string) {
 	url_ := "https://api.twitter.com/1.1/statuses/user_timeline.json"
-	opt := map[string]string{"screen_name": "chobi_e"}
+	//opt := map[string]string{"screen_name": "chobi_e"}
 
 	param := make(url.Values)
 	for k, v := range opt {
