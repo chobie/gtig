@@ -305,6 +305,36 @@ func (world *World) SendPrivMessage(from, room, message string) {
 	})
 }
 
+func (world *World) SendNoticeMessage(from, room, message string) {
+	var user *User
+	var ok bool
+
+	if _, ok = world.Users[from]; !ok {
+		world.Users[from] = &User{
+			Name: []byte(from),
+		}
+		user = world.Users[from]
+	} else {
+		user = world.Users[from]
+	}
+
+	if r, ok := world.Rooms[room]; ok {
+		if _, exist := r.Users[from]; !exist {
+			world.EventDispatcher.Dispatch("kernel.join", &JoinEvent{
+				Rooms: [][]byte{[]byte(room)},
+				User:  user,
+			})
+		}
+	}
+
+	world.EventDispatcher.Dispatch("kernel.notice", &NoticeEvent{
+		Room:     []byte(room),
+		User:     user,
+		Message:  []byte(message),
+	})
+}
+
+
 func (self *World) GetRoom(name []byte) (*Room, error) {
 	self.RLock()
 	defer self.RUnlock()
