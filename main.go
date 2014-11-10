@@ -65,36 +65,40 @@ func main() {
 						word := args[2]
 
 						fmt.Printf("search word; %s\n", word)
-						world.EventDispatcher.Dispatch("irc.kernel.room.create", &irc.NewRoomEvent{
+						world.EventDispatcher.Dispatch("kernel.room.create", &irc.NewRoomEvent{
 							Room: []byte(fmt.Sprintf("#search-%s", word)),
 							//User: user,
 							Callback: func(room *irc.Room) {
-								l, err := client.Search(string(word))
+								search_word := string(room.Name[8:])
+								fmt.Printf("search word: %s\n", search_word)
+								l, err := client.Search(search_word)
 								if err != nil {
 									fmt.Printf("Error: %s\n", err)
 									return
 								}
 
-								for i := len(l.Statuses)-1; i >= 0; i--  {
-									v := l.Statuses[i]
-									if v.Id > room.Last {
-										fmt.Printf("%d: %s > %s\n", v.Id, v.User.ScreenName, v.Text)
+								if l != nil {
+									for i := len(l.Statuses)-1; i >= 0; i--  {
+										v := l.Statuses[i]
+										if v.Id > room.Last {
+											fmt.Printf("%d: %s > %s\n", v.Id, v.User.ScreenName, v.Text)
 
-										u := &irc.User{
+											u := &irc.User{
 											Name: []byte(v.User.ScreenName),
 										}
-										world.EventDispatcher.Dispatch("irc.kernel.privmsg", &irc.NewMessageEvent{
+											world.EventDispatcher.Dispatch("kernel.privmsg", &irc.NewMessageEvent{
 												User:    u,
 												Room:    room.Name,
 												Message: []byte(v.Text),
-										})
-										room.Last = v.Id
+											})
+											room.Last = v.Id
+										}
 									}
 								}
 							},
 						})
 
-						world.EventDispatcher.Dispatch("irc.kernel.room.invite", &irc.InviteEvent{
+						world.EventDispatcher.Dispatch("kernel.room.invite", &irc.InviteEvent{
 							From: []byte("system"),
 							To: []byte("chobi_e"),
 							Room: []byte(fmt.Sprintf("#search-%s", word)),

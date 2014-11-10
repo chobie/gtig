@@ -221,6 +221,8 @@ func (self *Twitter) Search(query string) (*SearchResult, error) {
 
 	param := make(url.Values)
 	param.Set("q", query)
+	param.Set("count", "15")
+	param.Set("locale", "ja")
 
 	oauthClient.SignParam(self.token, "GET", url_, param)
 	url_ = url_ + "?" + param.Encode()
@@ -228,6 +230,7 @@ func (self *Twitter) Search(query string) (*SearchResult, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
 		return nil, err
@@ -236,7 +239,7 @@ func (self *Twitter) Search(query string) (*SearchResult, error) {
 	var tweets SearchResult
 	err = json.NewDecoder(res.Body).Decode(&tweets)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &tweets, nil
@@ -273,7 +276,7 @@ func (self *Twitter) Verify() (*User, error) {
 	var user User
 	json.NewDecoder(res.Body).Decode(&user)
 
-	return &user
+	return &user, nil
 }
 
 func (self *Twitter) Statuses(opt map[string]string) {
